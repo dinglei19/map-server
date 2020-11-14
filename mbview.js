@@ -64,7 +64,6 @@ module.exports = {
 
   listen: function (config, onListen) {
     const format = config.tiles._info.format;
-
     app.get('/', (req, res) => {
       if (format === 'pbf') {
         res.render('vector', config);
@@ -73,18 +72,42 @@ module.exports = {
       }
     });
 
-    app.get('/:source/:z/:x/:y.' + format, (req, res) => {
+    app.get('/:source/:z/:x/:y.*', (req, res) => {
       const p = req.params;
-
+      const format = req.params["0"];
       const tiles = config.sources[p.source].tiles;
-      tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
-        if (err) {
-          res.end();
-        } else {
-          res.writeHead(200, headers);
-          res.end(tile);
-        }
-      });
+    
+      res.header('Access-Control-Allow-Origin', '*');
+      res.header('Access-Control-Allow-Headers', 'content-type');
+      res.header('Access-Control-Allow-Methods', '*');
+      res.setHeader('Cache-Control', 'public,max-age=3153660000');
+      switch(format){
+        case "pbf":
+          tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
+            if (err) {
+              res.status(404);
+              res.end();
+            } else {
+              res.writeHead(200, headers);
+              res.end(tile);
+            }
+          });
+          break;
+        case "png":
+          res.header('Content-Type','image/png');
+          tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
+            if (err) {
+              res.status(404);
+            } else {
+              res.writeHead(200, headers);
+              res.end(tile);
+            }
+          });
+          break;
+        default:
+          break;
+      }
+     
     });
 
     config.server = app.listen(config.port, () => {
