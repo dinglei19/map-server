@@ -72,17 +72,42 @@ module.exports = {
       }
     });
 
+    let rasters = {};
+    Object.keys(config.sources).some((layer) => {
+      if (config.sources[layer].format === 'png') {
+        rasters = config.sources[layer];
+        return true;
+      } else {
+        return false;
+      }
+    });
+    app.get('/raster', (req, res) => {
+      if (Object.keys(rasters).length > 0){
+        res.render('raster', {
+          center: rasters.center,
+          maxzoom:  rasters.maxzoom,
+          port: config.port,
+          format: 'png',
+          sources: rasters
+        });
+      } else {
+        res.status(404);
+        res.end();
+      }
+
+    });
+
     app.get('/:source/:z/:x/:y.*', (req, res) => {
       const p = req.params;
-      const format = req.params["0"];
+      const format = req.params['0'];
       const tiles = config.sources[p.source].tiles;
-    
+
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Headers', 'content-type');
       res.header('Access-Control-Allow-Methods', '*');
       res.setHeader('Cache-Control', 'public,max-age=3153660000');
-      switch(format){
-        case "pbf":
+      switch (format){
+        case 'pbf':
           tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
             if (err) {
               res.status(404);
@@ -93,7 +118,7 @@ module.exports = {
             }
           });
           break;
-        case "png":
+        case 'png':
           res.header('Content-Type','image/png');
           tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
             if (err) {
@@ -107,7 +132,7 @@ module.exports = {
         default:
           break;
       }
-     
+
     });
 
     config.server = app.listen(config.port, () => {
