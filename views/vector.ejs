@@ -126,7 +126,7 @@
         map.addSource('<%= sid %>', {
           type: 'vector',
           tiles: [
-            'http://localhost:<%= port %>/<%= sid %>/{z}/{x}/{y}.pbf'
+            'http://<%= ip %>:<%= port %>/<%= sid %>/{z}/{x}/{y}.pbf'
           ],
           maxzoom: <%= sources[sid].maxzoom %>
     });

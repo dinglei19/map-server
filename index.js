@@ -48,11 +48,12 @@ const init = function () {
     center: [35.33, 103.23],
     mbtiles: mbtiles,
     port: argv.port || 7900,
+    ip: argv.ip || utils.getIPAddress(),
     zoom: 12,
     quiet: argv.q || argv.quiet
   };
 
   MBView.serve(params, (err, config) => {
-    console.log('Listening on http://localhost:' + config.port);
+    console.log('Listening on http://' + params.ip + ':' + config.port);
   });
 };
