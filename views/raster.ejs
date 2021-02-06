@@ -1,35 +1,89 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-<meta charset=utf-8 />
-<title>mbview - raster</title>
-<meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-<script src='../public/mapbox/mapbox-gl.js'></script>
-<link href='../public/mapbox/mapbox-gl.css' rel='stylesheet' />
-<script src='../public/mapbox/leaflet-hash.js'></script>
+  <meta charset=utf-8 />
+  <title>mbview - raster</title>
+  <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+  <script src='/mapbox/mapbox-gl.js'></script>
+  <link rel="stylesheet" type="text/css" href='/mapbox/mapbox-gl.css' rel='stylesheet' />
+  <link rel="stylesheet" type="text/css" href='/mapbox/base.css' rel='stylesheet' />
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      -webkit-user-select: none;
+      background-position: 0px 0px, 10px 10px;
+      background-size: 20px 20px;
+      background-color: white;
+      background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee 100%), linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee 100%);
+    }
 
-<style>
-  body {
-    margin:0;
-    padding:0;
-    -webkit-user-select: none;
-    background-position: 0px 0px, 10px 10px;
-    background-size: 20px 20px;
-    background-color: white;
-    background-image: linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee 100%),linear-gradient(45deg, #eee 25%, transparent 25%, transparent 75%, #eee 75%, #eee 100%);
-  }
-  #map { background: transparent; position:absolute; top:0; bottom:0; width:100%; }
-</style>
+    #map {
+      background: transparent;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
 </head>
-<body>
-<div id='map'></div>
-<script>
-  var source = '<%= Object.keys(sources)[0] %>';
-  var center = [<%= center %>];
 
-  var map = L.mapbox.map('map').setView([center[1], center[0]], center[2]);
-  var tilelayer = L.tileLayer('http://localhost:<%= port %>/' + source + '/{z}/{x}/{y}.<%= format %>', { maxNativeZoom: <%= maxzoom %> }).addTo(map);
-  var hash = L.hash(map);
-</script>
+<body>
+  <div id='map'></div>
+  <script>
+    var center = [<%= center %>];
+    center = [center[0], center[1]];
+    var style = {
+      "version": 8,
+      "light": {
+        "anchor": "viewport",
+        "color": "hsl(56, 32%, 98%)",
+        "position": [5, 210, 30],
+        "intensity": 0.42
+      },
+      "sources": {},
+      "layers": [{
+        "id": "background",
+        "type": "background",
+        "layout": {},
+        "paint": {
+          "background-color": "#000"
+        }
+      }]
+    }
+    mapboxgl.accessToken = 'pk.eyJ1IjoibGVpc3VyZWQiLCJhIjoiY2prMzl6enJiMTB1azNxbncxZjZtNXIxbCJ9.RC7YxMunNnAk_YGDwYONEw';
+    var map = new mapboxgl.Map({
+      container: 'map',
+      style: style,
+      center: center,
+      zoom: <%= zoom %>,
+      hash: true,
+      maxZoom: 30
+    });
+
+    map.on('load', function () {
+  <% Object.keys(sources).forEach(function (sid) { %>
+      console.log('<%= sid %>')
+      map.addSource('<%= sid %>', {
+        type: "raster",
+        tiles: [
+          'http://localhost:<%= port %>/<%= sid %>/{z}/{x}/{y}.png'
+        ],
+        tileSize: 256
+      });
+
+      map.addLayer({
+        'id': '<%= sid %>-raster',
+        'type': 'raster',
+        'source': '<%= sid %>',
+        'minzoom': 0,
+        'maxzoom': 22
+      });
+
+  <% }); %>
+});
+  </script>
 </body>
+
 </html>

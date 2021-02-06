@@ -46,7 +46,7 @@ module.exports = {
         res.set('Access-Control-Allow-Origin', '*');
       }
     };
-    app.use(express.static('public',options));
+    app.use(express.static('public', options));
 
     const loadTiles = this.loadTiles;
     const listen = this.listen;
@@ -63,25 +63,41 @@ module.exports = {
   },
 
   listen: function (config, onListen) {
-    const format = config.tiles._info.format;
-    app.get('/', (req, res) => {
-      if (format === 'pbf') {
-        res.render('vector', config);
-      } else {
-        res.render('raster', config);
+    let pbfsources = {}, pngsources = {};
+    Object.keys(config.sources).forEach((key) => {
+      if (config.sources[key].format) {
+        if (config.sources[key].format === 'pbf') {
+          pbfsources[key] = config.sources[key];
+        } else if (config.sources[key].format === 'png') {
+          pngsources[key] = config.sources[key];
+        }
       }
+    })
+    app.get('/pbf', (req, res) => {
+      res.render('vector', {
+        ...config,
+        sources: pbfsources
+      });
     });
+
+    app.get('/raster', (req, res) => {
+      res.render('raster', {
+        ...config,
+        sources: pngsources
+      });
+    });
+
 
     app.get('/:source/:z/:x/:y.*', (req, res) => {
       const p = req.params;
       const format = req.params["0"];
       const tiles = config.sources[p.source].tiles;
-    
+
       res.header('Access-Control-Allow-Origin', '*');
       res.header('Access-Control-Allow-Headers', 'content-type');
       res.header('Access-Control-Allow-Methods', '*');
       res.setHeader('Cache-Control', 'public,max-age=3153660000');
-      switch(format){
+      switch (format) {
         case "pbf":
           tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
             if (err) {
@@ -94,7 +110,7 @@ module.exports = {
           });
           break;
         case "png":
-          res.header('Content-Type','image/png');
+          res.header('Content-Type', 'image/png');
           tiles.getTile(p.z, p.x, p.y, (err, tile, headers) => {
             if (err) {
               res.status(404);
@@ -107,7 +123,7 @@ module.exports = {
         default:
           break;
       }
-     
+
     });
 
     config.server = app.listen(config.port, () => {
