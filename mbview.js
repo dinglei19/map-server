@@ -90,7 +90,7 @@ module.exports = {
 
     app.get('/:source/:z/:x/:y.*', (req, res) => {
       const p = req.params;
-      const format = req.params["0"];
+      const format = req.params['0'];
       const tiles = config.sources[p.source].tiles;
 
       res.header('Access-Control-Allow-Origin', '*');
